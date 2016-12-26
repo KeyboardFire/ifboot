@@ -88,6 +88,7 @@ cmds = {
             `tmux kill-session -t ifboot`
             `rm frotzscript frotzbuf`
             `kill #{tailpid}`
+            tailpid = nil
             reply m, 'stopped current game'
         else
             reply m, 'there is no game currently in progress'
@@ -98,6 +99,13 @@ cmds = {
 bot = Cinch::Bot.new do
     prefix = '.'
     botprefix = '.'
+
+    if playing?
+        File.delete 'frotzbuf'
+        tailpid = `tail -f frotzscript > frotzbuf & echo $!`
+        sleep 0.05
+        File.truncate 'frotzbuf', 0
+    end
 
     configure do |c|
         c.server = $config[:server]
@@ -121,8 +129,8 @@ bot = Cinch::Bot.new do
         if cmd == botprefix + 'restart'  # special-case
             if m.user.nick == 'KeyboardFire'
                 reply m, 'restarting bot...'
+                `kill #{tailpid}` if tailpid
                 bot.quit("restarting (restarted by #{m.user.nick})")
-                sleep 0.1 while bot.quitting
                 # you're supposed to run this in a loop
                 # while :; do ./ifboot.rb; done
             else
@@ -189,3 +197,4 @@ end
 
 bot.loggers << Cinch::Logger::NotALogger.new(File.open '/dev/null')
 bot.start
+# sleep 0.1 while bot.quitting
