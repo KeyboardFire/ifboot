@@ -70,6 +70,8 @@ cmds = {
     start: ->m, args {
         if playing?
             reply m, 'there is already a game in progress'
+        elsif !args
+            reply m, 'please specify a game to start (..start GAME; see ..games for a list of games)'
         elsif games[args.to_sym]
             `tmux new-session -d -s ifboot 'frotz -S 0 #{games[args.to_sym]}'`
             `tmux send-keys -t ifboot SCRIPT`
